@@ -1,0 +1,30 @@
+[package]
+name="rusty-crub-ap26"
+edition = "2024"
+
+[[bin]]
+path="crates/game/src/main.rs"
+name="archi"
+
+[workspace]
+members = [
+    "crates/admirality",
+    "crates/cartographer",
+    "crates/chart",
+    "crates/game",
+    "crates/island",
+    "crates/ship",
+]
+
+[workspace.package]
+edition = "2024"
+
+[lints.rust]
+unsafe_code="forbid"
+
+[lints.clippy]
+missing_panics_doc="deny"
+unwrap_used="warn"
+
+
+
