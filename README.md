@@ -1,3 +1,13 @@
+# Rusty Crub
+
+This repository contains the project for the course Advanced Programming, A.Y. 2026/2027
+
+## Members
+ - Enea D'Angio
+ - Laura Prandina
+ - Ivan Nedeljkovic
+ - Michele Porcellato
+
 # Project Template
 
 This repository is a template for **group and individual contributions** for the Advanced Programming course project, A.Y. 2026/2027.
