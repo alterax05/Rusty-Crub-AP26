@@ -11,8 +11,7 @@ This repository contains the project for the course Advanced Programming, A.Y. 2
 ## Development
 
 This repo uses [pre-commit](https://github.com/pre-commit/pre-commit) to ensure code quality and to enforce formatting standards.
-Before committing anything, follow the [install guide](https://pre-commit.com/#install) (you can also do `brew install pre-commit
-`) and run `pre-commit install` to install all the pre-commit hooks.
+Before committing anything, follow the [install guide](https://pre-commit.com/#install) (you can also do `brew install pre-commit`) and run `pre-commit install` to install all the pre-commit hooks.
 
 # Project Template
 
