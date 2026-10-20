@@ -1,0 +1,20 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      # - id: check-yaml
+      - id: check-added-large-files
+      - id: check-toml
+
+  - repo: local
+    hooks:
+      - id: check-rs-formatting
+        name: Check for not formatted Rust files
+        entry: cargo fmt -- --check
+        language: system
+        types: [ rust ]
+        pass_filenames: false
