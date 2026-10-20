@@ -25,6 +25,3 @@ unsafe_code="forbid"
 [lints.clippy]
 missing_panics_doc="deny"
 unwrap_used="warn"
-
-
-
