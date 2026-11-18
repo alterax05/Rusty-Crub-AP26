@@ -350,6 +350,3 @@ pub trait Island: Send {
     /// Its turn at the end of every round.
     fn end_of_round(&mut self, ctx: &IslandContext);
 }
-
-/// How a Chart builds an Island written by somebody else.
-pub type IslandFactory = fn(IslandInit) -> Box<dyn Island>;
