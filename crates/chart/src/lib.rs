@@ -13,8 +13,8 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use island::{Generous, IslandFactory, IslandType};
 use protocol::{
-    Action, Axis, Bound, Cell, Chart, Clue, DefaultMap, GenError, IslandId, IslandInit, Map, Outcome, Params,
-    Rejection, Report, Round, Seed, ShipId, ShipView, SpectatorView, Terrain,
+    Action, Axis, Bound, Cell, Chart, Clue, DefaultMap, Event, GenError, IslandAnswer, IslandId, IslandInit, Map,
+    Outcome, Params, Rejection, Report, Round, Seed, ShipId, ShipView, SpectatorView, Terrain,
 };
 
 pub use actions::ValidatedAction;
@@ -621,6 +621,47 @@ impl DefaultChart {
     pub fn learn(&mut self, ship: ShipId, clues: &[Clue]) {
         todo!()
     }
+
+    /// Moves `ship` into `to`.
+    fn do_move(&mut self, ship: ShipId, to: Cell) -> Vec<Report> {
+        let ship_state = self.ships.get_mut(&ship).unwrap();
+        ship_state.cell = to;
+        ship_state.moored_at = None;
+        vec![Report {
+            to: BTreeSet::from([ship]),
+            event: Event::Moved { ship, to },
+        }]
+    }
+
+    fn do_moor(&mut self, ship: ShipId, island: IslandId) -> Vec<Report> {
+        let ship_state = self.ships.get_mut(&ship).unwrap();
+        ship_state.moored_at = Some(island);
+        vec![Report {
+            to: BTreeSet::from([ship]),
+            event: Event::Moored { ship, island },
+        }]
+    }
+
+    fn give_clue(&mut self, ship: ShipId) -> Vec<Report> {
+        //right now give to the ship the full strenght clue.
+        //TODO: when the island is developed, this function will use
+        // an `island.ask_clue()` function
+        let ship_state = self.ships.get_mut(&ship).unwrap();
+        if let Some(island_id) = ship_state.moored_at {
+            let clue = self.islands.get(&island_id).unwrap().clue;
+            ship_state.clues.insert(clue);
+
+            vec![Report {
+                to: BTreeSet::from([ship]),
+                event: Event::Answered {
+                    island: island_id,
+                    answer: IslandAnswer::Clue(clue),
+                },
+            }]
+        } else {
+            Vec::new()
+        }
+    }
 }
 
 impl Chart for DefaultChart {
@@ -648,12 +689,20 @@ impl Chart for DefaultChart {
 
     ///Validate an action
     fn validate(&self, ship: ShipId, action: &Action) -> Result<ValidatedAction, Rejection> {
-        todo!()
+        // right now every action is valid
+        // TODO: write an actual validate
+
+        Ok(ValidatedAction::new(ship, *action))
     }
 
     ///Apply a validated action
     fn apply(&mut self, action: ValidatedAction) -> Vec<Report> {
-        todo!()
+        match action.into_parts() {
+            (ship, Action::Move { to }) => self.do_move(ship, to),
+            (ship, Action::Moor { island }) => self.do_moor(ship, island),
+            (ship, Action::AskClue) => self.give_clue(ship),
+            _ => panic!(),
+        }
     }
 
     ///Took the game to the next round
