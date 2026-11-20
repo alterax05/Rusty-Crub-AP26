@@ -13,6 +13,46 @@ use std::collections::{BTreeMap, BTreeSet};
 pub use common::geometry::{Cell, DefaultMap, Direction, Map, MapError, Terrain, visible};
 pub use common::shared::{IslandId, Params, Round, Seed, ShipId, TurnToken};
 
+use std::fmt::Debug;
+
+// ---------------------------------------------------------------- Protocol 8 (draft, #114 and #115)
+
+pub trait Chart: Send {
+    type ValidatedAction: Debug;
+
+    /// # Errors
+    fn generate(seed: Seed, params: &Params) -> Result<Self, GenError>
+    where
+        Self: Sized;
+
+    #[must_use]
+    fn params(&self) -> &Params;
+
+    #[must_use]
+    fn map(&self) -> &DefaultMap;
+
+    #[must_use]
+    fn weather_seed(&self) -> Seed;
+
+    #[must_use]
+    fn round(&self) -> Round;
+
+    /// # Errors
+    fn validate(&self, ship: ShipId, action: &Action) -> Result<Self::ValidatedAction, Rejection>;
+
+    fn apply(&mut self, action: Self::ValidatedAction) -> Vec<Report>;
+
+    fn advance_round(&mut self) -> Vec<Report>;
+
+    #[must_use]
+    fn view_for(&self, ship: ShipId) -> Option<ShipView>;
+
+    #[must_use]
+    fn spectator_view(&self) -> SpectatorView;
+    #[must_use]
+    fn outcome(&self) -> Option<Outcome>;
+}
+
 /// Placeholder until the `wind` crate reaches `Common_Code`'s `main`. It breaks the second law
 /// of the wind (Main 2.4) on purpose: replace it, do not test against it.
 #[must_use]

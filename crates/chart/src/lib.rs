@@ -11,18 +11,20 @@ mod views;
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use island::IslandFactory;
+use island::{Generous, IslandFactory, IslandType};
 use protocol::{
-    Action, Axis, Bound, Cell, Clue, DefaultMap, GenError, IslandId, IslandInit, Map, Outcome, Params, Rejection,
-    Report, Round, Seed, ShipId, ShipView, SpectatorView, Terrain,
+    Action, Axis, Bound, Cell, Chart, Clue, DefaultMap, GenError, IslandId, IslandInit, Map, Outcome, Params,
+    Rejection, Report, Round, Seed, ShipId, ShipView, SpectatorView, Terrain,
 };
 
 pub use actions::ValidatedAction;
 
 use state::{Ending, IslandSlot, ShipState};
 
+const ISLANDS: &[IslandFactory] = &[|_| IslandType::Generous(Generous)];
+
 /// Generate the map, validate all the actions and contains all the state of the game.
-pub struct Chart {
+pub struct DefaultChart {
     params: Params,
     map: DefaultMap,
     treasure: Cell,
@@ -34,7 +36,7 @@ pub struct Chart {
     ending: Option<Ending>,
 }
 
-impl Chart {
+impl DefaultChart {
     fn terrain_generator() -> Vec<(Cell, Terrain)> {
         vec![
             (Cell { q: -12, r: 0 }, Terrain::Clear),
@@ -509,8 +511,8 @@ impl Chart {
         ]
     }
 
-    ///Generate the Chart and the map starting from params and a seed.
-    pub fn generate(seed: Seed, params: &Params, islands: &[IslandFactory]) -> Result<Chart, GenError> {
+    /// Generate the `Chart` and the `Map` starting from params and a seed.
+    pub fn generate_with(seed: Seed, params: &Params, islands: &[IslandFactory]) -> Result<DefaultChart, GenError> {
         let terrain = Self::terrain_generator();
 
         // Footprint of each Island, read off the hard-coded terrain.
@@ -593,37 +595,17 @@ impl Chart {
                 .collect()
         };
 
-        Ok(Chart {
+        Ok(DefaultChart {
             params: *params,
             map,
             treasure,
             weather_seed: seed,
-            round: 200,
+            round: 1,
             ships,
             islands: island_slots,
             winner: None,
             ending: None,
         })
-    }
-
-    #[must_use]
-    pub fn params(&self) -> &Params {
-        &self.params
-    }
-
-    #[must_use]
-    pub fn map(&self) -> &DefaultMap {
-        &self.map
-    }
-
-    #[must_use]
-    pub fn weather_seed(&self) -> Seed {
-        self.weather_seed
-    }
-
-    #[must_use]
-    pub fn round(&self) -> Round {
-        self.round
     }
 
     ///Return all the id of all the afloat ship
@@ -636,36 +618,58 @@ impl Chart {
             .collect()
     }
 
+    pub fn learn(&mut self, ship: ShipId, clues: &[Clue]) {
+        todo!()
+    }
+}
+
+impl Chart for DefaultChart {
+    type ValidatedAction = ValidatedAction;
+
+    fn generate(seed: Seed, params: &Params) -> Result<Self, GenError> {
+        Self::generate_with(seed, params, ISLANDS)
+    }
+
+    fn params(&self) -> &Params {
+        &self.params
+    }
+
+    fn map(&self) -> &DefaultMap {
+        &self.map
+    }
+
+    fn weather_seed(&self) -> Seed {
+        self.weather_seed
+    }
+
+    fn round(&self) -> Round {
+        self.round
+    }
+
     ///Validate an action
-    pub fn validate(&self, ship: ShipId, action: &Action) -> Result<ValidatedAction, Rejection> {
+    fn validate(&self, ship: ShipId, action: &Action) -> Result<ValidatedAction, Rejection> {
         todo!()
     }
 
     ///Apply a validated action
-    pub fn apply(&mut self, action: ValidatedAction) -> Vec<Report> {
+    fn apply(&mut self, action: ValidatedAction) -> Vec<Report> {
         todo!()
     }
 
     ///Took the game to the next round
-    pub fn advance_round(&mut self) -> Vec<Report> {
+    fn advance_round(&mut self) -> Vec<Report> {
         todo!()
     }
 
-    pub fn learn(&mut self, ship: ShipId, clues: &[Clue]) {
-        todo!()
-    }
-    #[must_use]
-    pub fn view_for(&self, ship: ShipId) -> Option<ShipView> {
+    fn view_for(&self, ship: ShipId) -> Option<ShipView> {
         todo!()
     }
 
-    #[must_use]
-    pub fn spectator_view(&self) -> SpectatorView {
+    fn spectator_view(&self) -> SpectatorView {
         todo!()
     }
 
-    #[must_use]
-    pub fn outcome(&self) -> Option<Outcome> {
+    fn outcome(&self) -> Option<Outcome> {
         todo!()
     }
 }

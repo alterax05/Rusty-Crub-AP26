@@ -8,7 +8,11 @@ pub struct ValidatedAction {
 }
 
 impl ValidatedAction {
-    fn into_parts(self) -> (ShipId, Action) {
+    pub(crate) fn new(ship: ShipId, action: Action) -> Self {
+        Self { ship, action }
+    }
+
+    pub(crate) fn into_parts(self) -> (ShipId, Action) {
         (self.ship, self.action)
     }
 }
