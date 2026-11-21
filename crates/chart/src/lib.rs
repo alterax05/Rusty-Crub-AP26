@@ -2,12 +2,8 @@
 #![allow(dead_code, unused_variables, clippy::missing_errors_doc)]
 
 mod actions;
-mod checks;
-mod generate;
 mod rounds;
-mod scenario;
 mod state;
-mod views;
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -19,6 +15,7 @@ use protocol::{
 
 pub use actions::ValidatedAction;
 
+use crate::state::Status;
 use state::{Ending, IslandSlot, ShipState};
 
 const ISLANDS: &[IslandFactory] = &[|_| IslandType::Generous(Generous)];
@@ -662,6 +659,61 @@ impl DefaultChart {
             Vec::new()
         }
     }
+
+    fn hitted(&mut self, ship: ShipId, target: ShipId) -> Vec<Report> {
+        // Used this order (calculating new_hull and full_strength -> update the actual hull and set the status)
+        // because of the mutable borrowing needed fot target_state.
+
+        let new_hull = self.ships.get(&target).unwrap().hull.saturating_sub(1);
+        let full_strength = if new_hull == 0 {
+            self.full_strength(self.ships.get(&target).unwrap())
+        } else {
+            0
+        };
+
+        let target_state = self.ships.get_mut(&target).unwrap();
+        target_state.hull = new_hull;
+
+        if new_hull == 0 {
+            target_state.status = Status::Sunk { full_strength };
+        }
+
+        vec![Report {
+            to: BTreeSet::from([ship]),
+            event: Event::Hit {
+                target,
+                hull: target_state.hull,
+            },
+        }]
+    }
+
+    fn alliance_propose(&mut self, ship: ShipId, target: ShipId) -> Vec<Report> {
+        todo!()
+    }
+
+    fn alliance_accept(&mut self, ship: ShipId, proposer: ShipId) -> Vec<Report> {
+        todo!()
+    }
+
+    fn alliance_break(&mut self, ship: ShipId) -> Vec<Report> {
+        todo!()
+    }
+
+    fn do_declare(&mut self, ship: ShipId) -> Vec<Report> {
+        let target_state = self.ships.get(&ship).unwrap();
+        let declared_cell = target_state.cell;
+        if self.treasure == declared_cell {
+            self.winner = Some(ship);
+        }
+
+        vec![Report {
+            to: self.ships.keys().copied().collect(),
+            event: Event::Declared {
+                ship,
+                cell: declared_cell,
+            },
+        }]
+    }
 }
 
 impl Chart for DefaultChart {
@@ -701,6 +753,11 @@ impl Chart for DefaultChart {
             (ship, Action::Move { to }) => self.do_move(ship, to),
             (ship, Action::Moor { island }) => self.do_moor(ship, island),
             (ship, Action::AskClue) => self.give_clue(ship),
+            (ship, Action::Bombard { target }) => self.hitted(ship, target),
+            (ship, Action::ProposeAlliance { to }) => self.alliance_propose(ship, to),
+            (ship, Action::BreakAlliance) => self.alliance_break(ship),
+            (ship, Action::Declare) => self.do_declare(ship),
+            (ship, Action::Hold) => Vec::new(),
             _ => panic!(),
         }
     }
